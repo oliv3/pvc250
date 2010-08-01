@@ -5,6 +5,7 @@
 
 
 %% -- shuffle/1
+%% Adapted from http://www.trapexit.org/RandomShuffle
 shuffle(List) ->
     %% Determine the log n portion then randomize the list.
     randomize(round(math:log(length(List)) + 0.5), List).
