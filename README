@@ -1,3 +1,7 @@
 This is an attempt to find a solution to
   http://labo.algo.free.fr/defi250/defi_des_250_villes.html
 using Erlang
+
+1. Compiling
+
+	$ make
