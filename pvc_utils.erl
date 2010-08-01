@@ -18,8 +18,12 @@ randomize(T, List) ->
 		end, randomize(List), lists:seq(1, (T - 1))).
 
 randomize(List) ->
-    D = lists:map(fun(A) ->
-			  {random:uniform(), A}
-		  end, List),
+    %% Refactored by tidier:
+    %% D = lists:map(fun(A) ->
+    %% 			  {random:uniform(), A}
+    %% 		  end, List),
+    %% to:
+    D = [{random:uniform(), A} || A <- List],
+
     {_, D1} = lists:unzip(lists:keysort(1, D)), 
     D1.
