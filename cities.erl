@@ -1,9 +1,9 @@
 -module(cities).
 -author('olivier@biniou.info').
 
--include("pvc.hrl").
+-include("tsm.hrl").
 
--export([start/0, start/1, stop/0]).
+-export([start/1, stop/0]).
 -export([init/2]).
 
 -define(SERVER, ?MODULE).
@@ -14,10 +14,6 @@
 %% Dist: {{N1, N2}, RealDist, CorrectedDist} %% named_table, N1 < N2
 %%
 
-
-start() ->
-    start("test.csv").
-
 start(File) ->
     {ok, Bin} = file:read_file(File),
     L0 = binary_to_list(Bin),
@@ -25,7 +21,8 @@ start(File) ->
     N1 = list_to_integer(N0),
     io:format("[+] Loading ~p cities~n", [N1]),
     SPid = spawn(?MODULE, init, [N1, Cities]),
-    register(?SERVER, SPid).
+    register(?SERVER, SPid),
+    N1.
 
 init(N, Cities) ->
     Tid1 = ets:new(cities, []),

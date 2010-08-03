@@ -1,4 +1,4 @@
--module(pvc_utils).
+-module(utils).
 -author('olivier@biniou.info').
 
 -export([shuffle/1]).
