@@ -1,4 +1,4 @@
-all: pvc_utils.beam
+all: pvc_utils.beam cities.beam path.beam
 
 #OPTIMS=+hipe
 
