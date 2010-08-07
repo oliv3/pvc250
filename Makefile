@@ -1,6 +1,6 @@
 #OPTIMS=+hipe
 
-all: utils.beam cities.beam path.beam tsm.beam
+all: utils.beam cities.beam path.beam tsp.beam
 
 run:
 	@./go.sh

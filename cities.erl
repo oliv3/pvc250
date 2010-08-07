@@ -1,10 +1,10 @@
 -module(cities).
 -author('olivier@biniou.info').
 
--include("tsm.hrl").
+-include("tsp.hrl").
 
 -export([start/1, stop/0]).
--export([init/2]).
+-export([init/3]).
 
 -define(SERVER, ?MODULE).
 
@@ -20,16 +20,20 @@ start(File) ->
     [N0|Cities] = string:tokens(L0, [10]),
     N1 = list_to_integer(N0),
     io:format("[+] Loading ~p cities~n", [N1]),
-    SPid = spawn(?MODULE, init, [N1, Cities]),
+    SPid = spawn(?MODULE, init, [self(), N1, Cities]),
     register(?SERVER, SPid),
-    N1.
+    receive
+	started ->
+	    N1
+    end.
 
-init(N, Cities) ->
+init(Pid, N, Cities) ->
     Tid1 = ets:new(cities, []),
     load_cities(Tid1, Cities),
     ets:new(?DIST, [named_table]),
     init_dist(N, Tid1),
     ets:delete(Tid1),
+    Pid ! started,
     loop().
 
 

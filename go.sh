@@ -1,2 +1,3 @@
 #!/bin/sh
-erl -s tsm
+reset
+erl +A 4 +P 200000 -s tsp

@@ -3,11 +3,11 @@
 
 -export([shuffle/1]).
 
-
 %% -- shuffle/1
 %%
 %% Based on http://www.trapexit.org/RandomShuffle
 %% Refactored through tidier
+%% Use the crypto library
 shuffle(List) ->
     %% Determine the log n portion then randomize the list.
     randomize(round(math:log(length(List)) + 0.5), List).
@@ -20,6 +20,10 @@ randomize(T, List) ->
 		end, randomize(List), lists:seq(1, (T - 1))).
 
 randomize(List) ->
-    D = [{random:uniform(), A} || A <- List],
+    D = [{uniform(), A} || A <- List],
     {_, D1} = lists:unzip(lists:keysort(1, D)), 
     D1.
+
+uniform() ->
+    <<B>> = crypto:rand_bytes(1),
+    B / 255.
