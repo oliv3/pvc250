@@ -177,7 +177,7 @@ receive_refs([Ref|Refs], Acc) ->
 
 maybe_mutate(Pid) ->
     case crypto:rand_uniform(0, ?P_MUTATION) of
-	false -> %% 0 ->
+	0 ->
 	    path:mutate(Pid);
 	_Other ->
 	    ok
