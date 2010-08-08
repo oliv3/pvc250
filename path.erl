@@ -121,23 +121,30 @@ loop(Path, Length) ->
 	    Pid ! {path, Path},
 	    loop(Path, Length);
 
-	%% {mutate, N} when N < 3 ->
-	%%     mut_reverse(Path);
+	{mutate, N} when N < 3 ->
+	    NewPath = mut_reverse(Path),
+	    NewLength = path:length(NewPath),
+	    loop(NewPath, NewLength);
 
-	%% {mutate, N} when N < 6 ->
-	%%     mut_short_swap(Path);
+	{mutate, N} when N < 6 ->
+	    NewPath = mut_short_swap(Path),
+	    NewLength = path:length(NewPath),
+	    loop(NewPath, NewLength);
 
-	%% {mutate, N} when N < 9 ->
-	%%     mut_long_swap(Path);
+	{mutate, N} when N < 9 ->
+	    NewPath = mut_long_swap(Path),
+	    NewLength = path:length(NewPath),
+	    loop(NewPath, NewLength);
 
 	{mutate, N} when N =:= 9 ->
 	    NewPath = mut_randomize(Path),
-	    NewLength = path:length(Path),
+	    NewLength = path:length(NewPath),
+	    %% io:format("[d] mut_randomize~nOld= ~p ~p~nNew= ~p ~p~n", [Length, Path, NewLength, NewPath]),
 	    loop(NewPath, NewLength);
 
 	{mutate, OtherN} ->
 	    %% exit({bad_mutation, OtherN});
-	    io:format("unhandled mutation in pid ~p: #~p~n", [self(), OtherN]),
+	    io:format("[!] unhandled mutation in pid ~p: #~p~n", [self(), OtherN]),
 	    loop(Path, Length);
 
 	die ->
@@ -186,6 +193,15 @@ mutate(Pid) ->
     Mutation = crypto:rand_uniform(0, ?NB_MUTATIONS),
     Pid ! {mutate, Mutation}.
 
+
+mut_reverse(C) ->
+    C.
+
+mut_short_swap(C) ->
+    C.
+
+mut_long_swap(C) ->
+    C.
 
 mut_randomize(C) ->
     utils:shuffle(C).

@@ -58,7 +58,7 @@ loop(#state{n=N, pids=Pids} = State) ->
     %% io:format("[d] Evals1:~n~p~n", [Evals1]),
     
     TotalScore = lists:sum([Score || {_Path, Score} <- Evals1]),
-    %% io:format("[d] Total score: ~p~n", [TotalScore]),
+    io:format("[d] Total score: ~p~n", [TotalScore]),
 
     Evals2 = [{Path, TotalScore-Score} || {Path, Score} <- Evals1],
     %% io:format("[d] Evals2:~n~p~n", [Evals2]),
@@ -75,6 +75,7 @@ loop(#state{n=N, pids=Pids} = State) ->
     %% io:format("~n[*] Generation: ~p, ~p individuals evaluated~n", [Gen, Gen*?POP_SIZE]),
     io:format("[i] ~p processes~n~n", [length(processes())]),
     io:format("[*] Top ~p:~n", [?TOP]),
+    %% io:format("[*] Top ~p: ~p~n", [?TOP, Top]),
     [path:display(Pid) || {Pid, _Score} <- Top],
     io:format("~n", []),
 
