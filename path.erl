@@ -125,6 +125,43 @@ loop(Path, Length) ->
 	    ok
     end.
 
+%%
+%% Mutations
+%%
+rnd_pos() ->
+    crypto:rand_uniform(0, ?NC) + 1.
+
+%%
+%% take 2 random -different- integers in [1..?ALPHABET_SIZE]
+%%
+random2() ->
+    Rnd1 = rnd_pos(),
+    random2(Rnd1).
+random2(Rnd1) ->
+    Rnd2 = rnd_pos(),
+    if
+	Rnd1 =:= Rnd2 ->
+	    random2(Rnd1);
+
+	true ->
+	    if
+		Rnd1 < Rnd2 ->
+		    {Rnd1, Rnd2};
+
+		true ->
+		    {Rnd2, Rnd1}
+	    end
+    end.
+
+random2gap() ->
+    {Rnd1, Rnd2} = Rnd = random2(),
+    if
+	Rnd2 - Rnd1 > 1 ->
+	    Rnd;
+	true ->
+	    random2gap()
+    end.
+
 
 mutate(_Pid) ->
     ok.
@@ -132,11 +169,13 @@ mutate(_Pid) ->
     %% Pid ! {mutate, Mutation}.
 
 
-%% xover(Pid1, Pid2) ->
-%%     R = 4, %% random
-%%     xover1(Pid1, Pid2, R).
+mut_randomize(C) ->
+    utils:shuffle(C).
 
-%% xover1(Pid1, Pid2, R) ->
-%%     P1 = get_path(Pid1),
-%%     P2 = get_path(Pid2),
-%%     wip.
+%%
+%% Tests
+%%
+
+%% Basic chromosome
+c() ->
+    lists:seq($a, $j).
