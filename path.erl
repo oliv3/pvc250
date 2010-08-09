@@ -3,7 +3,9 @@
 
 -include("tsp.hrl").
 
+-ifdef(DEBUG).
 -compile([export_all]).
+-endif.
 
 -export([new/1, delete/1]).
 -export([get_length/1, get_path/1, display/1, mutate/1]). %% length/1, clength/1]).
@@ -158,7 +160,7 @@ rnd_pos() ->
     crypto:rand_uniform(0, ?NC) + 1.
 
 %%
-%% take 2 random -different- integers in [1..?ALPHABET_SIZE]
+%% take 2 random -different- integers in [1..NumberOfCities]
 %%
 random2() ->
     Rnd1 = rnd_pos(),
@@ -194,8 +196,34 @@ mutate(Pid) ->
     Pid ! {mutate, Mutation}.
 
 
+-ifdef(DEBUG).
+-define(D_F(F, A), io:format(F, A)).
+-define(D_MUTATE(C, X), io:format(" 1234567890~n ----------~n ~s~n ~s~n ----------~n", [C, X])).
+-else.
+-define(D_F(F, A), nop).
+-define(D_MUTATE(C, X), nop).
+-endif.
+
+%%
+%% Reverse a chromosome (completely or partially)
+%%
 mut_reverse(C) ->
-    C.
+    Positions = random2gap(),
+    mut_reverse(C, Positions).
+mut_reverse(C, {P1, P2} = _Pos) when P1 =:= 1 andalso P2 =:= ?NC ->
+    NewC = lists:reverse(C),
+    ?D_F("mut_reverse/2 pos: ~p (full)~n~n", [_Pos]),
+    ?D_MUTATE(C, cap(NewC)),
+    NewC;
+mut_reverse(C, {P1, P2} = _Pos) ->
+    {Rest, Right} = lists:split(P2, C),
+    {Left, Middle} = lists:split(P1-1, Rest), %% FIXME return always -1 ?
+    RMiddle = lists:reverse(Middle),
+    ?D_F("mut_reverse/2 pos: ~p (partial)~n~n", [_Pos]),
+    ?D_MUTATE(C, lists:flatten(Left ++ cap(RMiddle) ++ Right)),
+    %% lists:flatten(Left ++ RMiddle ++ Right).
+    Left ++ RMiddle ++ Right.
+
 
 mut_short_swap(C) ->
     C.
@@ -213,3 +241,25 @@ mut_randomize(C) ->
 %% Basic chromosome
 c() ->
     lists:seq($a, $j).
+
+%% Capitalize a string (or not)
+-ifdef(DEBUG).
+cap(List) ->
+    [C+($A-$a) || C <- List].
+-else.
+cap(List) ->
+    List.
+-endif.
+
+
+
+-ifdef(DEBUG).
+test_mut_reverse_full() ->
+    C = c(),
+    mut_reverse(C, {1, ?NC}).
+
+test_mut_reverse_partial() ->
+    C = c(),
+    mut_reverse(C).
+
+-endif.

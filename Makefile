@@ -4,7 +4,8 @@ all: utils.beam cities.beam path.beam tsp.beam
 
 run:
 	@./go.sh
-%.beam: %.erl
+
+%.beam: %.erl tsp.hrl
 	erlc $(OPTIMS) $<
 
 clean:
