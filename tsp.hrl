@@ -10,7 +10,7 @@
 
 %% Number of Real Cities
 -ifdef(DEBUG).
--define(NRC, 11).
+-define(NRC, 10).
 -else.
 -define(NRC, 250).
 -endif.

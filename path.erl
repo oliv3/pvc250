@@ -200,7 +200,7 @@ mutate(Pid) ->
 
 -ifdef(DEBUG).
 -define(D_F(F, A), io:format(F, A)).
--define(D_MUTATE(C, X), io:format(" 1234567890~n ----------~n ~s~n ~s~n ----------~n", [C, X])).
+-define(D_MUTATE(C, X), io:format(" 1234567890~n ----------~n ~w~n ~w~n ----------~n", [C, X])).
 -else.
 -define(D_F(F, A), nop).
 -define(D_MUTATE(C, X), nop).
@@ -244,7 +244,7 @@ mut_short_swap(C, Pos1) ->
     Tmp1 = setelement(Pos1, Tuple, E2),
     Tmp2 = setelement(Pos2, Tmp1, E1),
 
-    ?D_F("mut_short_swap/2 pos= ~p~n~n", [Pos1]),
+    %% ?D_F("mut_short_swap/2 pos= ~p~n~n", [Pos1]),
 
     tuple_to_list(Tmp2).
 

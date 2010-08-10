@@ -11,7 +11,7 @@
 %% d= 11.8093
 
 %% GA parameters
--define(POP_SIZE, 40000). %% 50000).
+-define(POP_SIZE, 100). %% 50000).
 
 %% Cross-over et mutations
 -define(P_XOVER,    80). %% 80%
@@ -26,10 +26,13 @@
 
 -record(state, {n, pids}).
 
-
+-ifdef(DEBUG).
 start() ->
-    %% start("test.csv").
+    start("test.csv").
+-else.
     start("defi250.csv").
+-endif.
+
 
 start(File) ->
     crypto:start(),
