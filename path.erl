@@ -3,9 +3,9 @@
 
 -include("tsp.hrl").
 
--ifdef(DEBUG).
+%%-ifdef(DEBUG).
 -compile([export_all]).
--endif.
+%%-endif.
 
 -export([new/1, delete/1]).
 -export([get_length/1, get_path/1, display/1, mutate/1]). %% length/1, clength/1]).
@@ -133,10 +133,10 @@ loop(Path, Length) ->
 	    NewLength = path:length(NewPath),
 	    loop(NewPath, NewLength);
 
-	{mutate, N} when N < 9 ->
-	    NewPath = mut_long_swap(Path),
-	    NewLength = path:length(NewPath),
-	    loop(NewPath, NewLength);
+	%% {mutate, N} when N < 9 ->
+	%%     NewPath = mut_long_swap(Path),
+	%%     NewLength = path:length(NewPath),
+	%%     loop(NewPath, NewLength);
 
 	{mutate, N} when N =:= 9 ->
 	    NewPath = mut_randomize(Path),
@@ -158,6 +158,8 @@ loop(Path, Length) ->
 %%
 rnd_pos() ->
     crypto:rand_uniform(0, ?NC) + 1.
+rnd_pos_m1() ->
+    crypto:rand_uniform(0, ?NC-1) + 1.
 
 %%
 %% take 2 random -different- integers in [1..NumberOfCities]
@@ -225,9 +227,30 @@ mut_reverse(C, {P1, P2} = _Pos) ->
     Left ++ RMiddle ++ Right.
 
 
+%%
+%% Swap two adjacent genes in a chromosome
+%%
 mut_short_swap(C) ->
-    C.
+    Pos1 = rnd_pos_m1(),
+    mut_short_swap(C, Pos1).
 
+mut_short_swap(C, Pos1) ->
+    Pos2 = Pos1+1,
+
+    Tuple = list_to_tuple(C),
+    E1 = element(Pos1, Tuple),
+    E2 = element(Pos2, Tuple),
+
+    Tmp1 = setelement(Pos1, Tuple, E2),
+    Tmp2 = setelement(Pos2, Tmp1, E1),
+
+    ?D_F("mut_short_swap/2 pos= ~p~n~n", [Pos1]),
+
+    tuple_to_list(Tmp2).
+
+%%
+%% Swap two distant genes in a chromosome
+%%
 mut_long_swap(C) ->
     C.
 
@@ -261,5 +284,10 @@ test_mut_reverse_full() ->
 test_mut_reverse_partial() ->
     C = c(),
     mut_reverse(C).
+
+%% TODO needs pretty-printing
+test_mut_short_swap() ->
+    C = c(),
+    mut_short_swap(C).
 
 -endif.
