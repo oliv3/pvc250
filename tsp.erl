@@ -11,7 +11,7 @@
 %% d= 11.8093
 
 %% GA parameters
--define(POP_SIZE, 100). %% 50000).
+-define(POP_SIZE, 10000). %% 50000).
 
 %% Cross-over et mutations
 -define(P_XOVER,    80). %% 80%
@@ -30,6 +30,7 @@
 start() ->
     start("test.csv").
 -else.
+start() ->
     start("defi250.csv").
 -endif.
 
@@ -76,7 +77,7 @@ loop(#state{n=N, pids=Pids} = State) ->
     %% Display Top N
     Top = top(Evals3),
     %% io:format("~n[*] Generation: ~p, ~p individuals evaluated~n", [Gen, Gen*?POP_SIZE]),
-    io:format("[i] ~p processes~n~n", [length(processes())]),
+    %% io:format("[i] ~p processes~n~n", [length(processes())]),
     io:format("[*] Top ~p:~n", [?TOP]),
     %% io:format("[*] Top ~p: ~p~n", [?TOP, Top]),
     [path:display(Pid) || {Pid, _Score} <- Top],
@@ -95,7 +96,7 @@ loop(#state{n=N, pids=Pids} = State) ->
     timer:sleep(1000),
 
     %% Next generation
-    loop(State#state{pids=NewPids}).
+    ?MODULE:loop(State#state{pids=NewPids}).
     
 
 top(List) ->
@@ -115,16 +116,16 @@ new_population(NCities, N, Population, MaxScore, Acc) ->
     Ref = make_ref(),
     V = self(),
     %% io:format("spawning MATE: ~p ~p~n", [Parent1, Parent2]),
-    spawn(fun() -> ?MODULE:mate(V, Ref, NCities, Parent1, Parent2) end),
+    spawn(fun() -> ?MODULE:mate(V, Ref, Parent1, Parent2) end),
     new_population(NCities, N-1, Population, MaxScore, [Ref | Acc]).
 
 
-mate(Pid, Ref, NCities, Pid1, Pid2) ->
+mate(Pid, Ref, Pid1, Pid2) ->
     P = crypto:rand_uniform(0, 101),
     %% io:format("*** Rand: ~p~n", [P]),
     if
 	P =< ?P_XOVER ->
-	    xover(Pid, Ref, NCities, Pid1, Pid2);
+	    xover(Pid, Ref, Pid1, Pid2);
 
 	true ->
 	    %% io:format("MATE: new/1 ~p~n", [Parent1]),
@@ -183,25 +184,30 @@ maybe_mutate(Pid) ->
     case crypto:rand_uniform(0, ?P_MUTATION) of
 	0 ->
 	    path:mutate(Pid);
+
 	_Other ->
 	    ok
     end.
 
 
-xover(Pid, Ref, NCities, Parent1, Parent2) ->
-    %% {_, _, MS} = now(),
+xover(Pid, Ref, Parent1, Parent2) ->
+    {_, _, MS} = now(),
     Chrom1 = path:get_path(Parent1),
     Chrom2 = path:get_path(Parent2),
     Parents = {Chrom1, Chrom2},
     %% io:format("xover: Parents= ~p~n", [Parents]),
-    Cut = crypto:rand_uniform(1, NCities),
-    {Child1, Child2} = xover1(Cut, Parents),
-    %% {Child1, Child2} = case MS rem 2 of
-    %% 			   0 ->
-    %% 			       xover1(Parents);
-    %% 			   1 ->
-    %% 			       xover2(Parents)
-    %% 		       end,
+
+    %% Cut = crypto:rand_uniform(1, NCities),
+    %% {Child1, Child2} = xover1(Cut, Parents),
+
+    {Child1, Child2} = case MS rem 2 of
+			   0 ->
+			       %% io:format("1"),
+			       xover1(Parents);
+			   1 ->
+			       %% io:format("2"),
+			       xover2(Parents)
+		       end,
 
     Pid1 = path:new(Child1),
     Pid2 = path:new(Child2),
@@ -211,6 +217,9 @@ xover(Pid, Ref, NCities, Parent1, Parent2) ->
     Pid ! {Ref, [Pid1, Pid2]}.
 
 
+xover1(Parents) ->
+    Cut = path:rnd_pos(),
+    xover1(Cut, Parents).
 xover1(Cut, {Path1, Path2}) ->
     {L1, R1} = lists:split(Cut, Path1),
     {L2, R2} = lists:split(Cut, Path2),
@@ -223,10 +232,51 @@ xover1(Cut, {Path1, Path2}) ->
 
     {lists:flatten(C1), lists:flatten(C2)}.
 
-%% xover2: on fait 2x xover1 avec 2 cutpoints distincts
 
-test() ->
+xover2(Parents) ->
+    Pos = path:random2(),
+    xover2(Pos, Parents).
+xover2({Cut1, Cut2}, Parents) ->
+    Children1 = xover1(Cut1, Parents),
+    xover1(Cut2, Children1).
+
+
+test_parents() ->
     P1 = lists:seq(1, 9),
     P2 = [4,1,6,3,9,8,2,5,7],
+    {P1, P2}.
+
+test_xover1() ->
+    Parents = test_parents(),
     Rnd = 4,
-    xover1(Rnd, {P1, P2}).
+    xover1(Rnd, Parents).
+
+test_xover2() ->
+    Parents = test_parents(),
+    Rnd = {2, 5},
+    xover2(Rnd, Parents).
+
+
+%% xover2 check:
+
+%% Parents:
+%% {[1,2,3,4,5,6,7,8,9],[4,1,6,3,9,8,2,5,7]}
+%% Children:
+%% > tsp:test_xover2().
+%% {[1,2,4,6,3,5,7,8,9],[4,1,2,3,5,6,9,8,7]}
+
+%% Step1:
+%% [1,2|3,4,5,6,7,8,9]
+%% [4,1|6,3,9,8,2,5,7]
+%% Result1:
+%% [1,2,4,6,3,9,8,5,7]
+%% [4,1,2,3,5,6,7,8,9]
+
+%% Step2:
+%% [1,2,4,6,3|9,8,5,7]
+%% [4,1,2,3,5|6,7,8,9]
+%% Result2:
+%% [1,2,4,6,3,5,7,8,9]
+%% [4,1,2,3,5,6,7,8,9]
+
+%% Which seems to be ok \o/

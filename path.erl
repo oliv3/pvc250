@@ -3,13 +3,15 @@
 
 -include("tsp.hrl").
 
+%% TODO: dans la loop, stocker le chromosome en binary
+
 %%-ifdef(DEBUG).
 -compile([export_all]).
 %%-endif.
 
 -export([new/1, delete/1]).
--export([get_length/1, get_path/1, display/1, mutate/1]). %% length/1, clength/1]).
-%% -export([xover/2]).
+-export([get_length/1, get_path/1, display/1, mutate/1]).
+-export([rnd_pos/0, random2/0]).
 
 -export([init/1, loop/2]).
 
@@ -21,7 +23,7 @@ new(Path) when is_list(Path) ->
     L = ?MODULE:length(Path),
     spawn(?MODULE, loop, [Path, L]);
 new(Max) ->
-    %%io:format("init: ~p~n", [Max]),
+    %% io:format("init: ~p~n", [Max]),
     spawn(?MODULE, init, [Max]).
 
 init(Max) ->
@@ -39,7 +41,7 @@ path(Path0) ->
 
 length(Path0) ->
     Path = path(Path0),
-    %%io:format("path(~p)~n", [Path]),
+    %% io:format("path(~p)~n", [Path]),
     sum(Path, 0, fun dist/2).
 clength(Path0) ->
     Path = path(Path0),
@@ -55,8 +57,8 @@ sum([C1, C2 | Tail], Acc, F) ->
 	    true ->
 		F(C2, C1)
 	end,
-    %%io:format("D= ~p Acc= ~p~n", [D, Acc]),
-    %%io:format("List: ~p Acc: ~p, F: ~p~n", [[C2 | Tail], Acc + D, F]),
+    %% io:format("D= ~p Acc= ~p~n", [D, Acc]),
+    %% io:format("List: ~p Acc: ~p, F: ~p~n", [[C2 | Tail], Acc + D, F]),
     sum([C2 | Tail], Acc + D, F).
 
 
@@ -133,10 +135,10 @@ loop(Path, Length) ->
 	    NewLength = path:length(NewPath),
 	    loop(NewPath, NewLength);
 
-	%% {mutate, N} when N < 9 ->
-	%%     NewPath = mut_long_swap(Path),
-	%%     NewLength = path:length(NewPath),
-	%%     loop(NewPath, NewLength);
+	{mutate, N} when N < 9 ->
+	    NewPath = mut_long_swap(Path),
+	    NewLength = path:length(NewPath),
+	    loop(NewPath, NewLength);
 
 	{mutate, N} when N =:= 9 ->
 	    NewPath = mut_randomize(Path),
@@ -200,7 +202,7 @@ mutate(Pid) ->
 
 -ifdef(DEBUG).
 -define(D_F(F, A), io:format(F, A)).
--define(D_MUTATE(C, X), io:format(" 1234567890~n ----------~n ~w~n ~w~n ----------~n", [C, X])).
+-define(D_MUTATE(C, X), io:format(" 1234567890~n ----------~n ~s~n ~s~n ----------~n", [C, X])).
 -else.
 -define(D_F(F, A), nop).
 -define(D_MUTATE(C, X), nop).
@@ -215,16 +217,16 @@ mut_reverse(C) ->
 mut_reverse(C, {P1, P2} = _Pos) when P1 =:= 1 andalso P2 =:= ?NC ->
     NewC = lists:reverse(C),
     ?D_F("mut_reverse/2 pos: ~p (full)~n~n", [_Pos]),
-    ?D_MUTATE(C, cap(NewC)),
+    ?D_MUTATE(C, NewC),
     NewC;
 mut_reverse(C, {P1, P2} = _Pos) ->
     {Rest, Right} = lists:split(P2, C),
     {Left, Middle} = lists:split(P1-1, Rest), %% FIXME return always -1 ?
     RMiddle = lists:reverse(Middle),
     ?D_F("mut_reverse/2 pos: ~p (partial)~n~n", [_Pos]),
-    ?D_MUTATE(C, lists:flatten(Left ++ cap(RMiddle) ++ Right)),
-    %% lists:flatten(Left ++ RMiddle ++ Right).
-    Left ++ RMiddle ++ Right.
+    NewC = Left ++ RMiddle ++ Right,
+    ?D_MUTATE(C, NewC),
+    NewC.
 
 
 %%
@@ -237,23 +239,45 @@ mut_short_swap(C) ->
 mut_short_swap(C, Pos1) ->
     Pos2 = Pos1+1,
 
+    %% Tuple = list_to_tuple(C),
+    %% E1 = element(Pos1, Tuple),
+    %% E2 = element(Pos2, Tuple),
+
+    %% Tmp1 = setelement(Pos1, Tuple, E2),
+    %% Tmp2 = setelement(Pos2, Tmp1, E1),
+    %% NewC = tuple_to_list(Tmp2),
+
+    NewC = swap(C, {Pos1, Pos2}),
+    ?D_F("mut_short_swap/2 pos= ~p~n~n", [Pos1]),
+    ?D_MUTATE(C, NewC),
+    NewC.
+
+%%
+%% Swap two distant genes in a chromosome
+%%
+mut_long_swap(C) ->
+    Pos = random2gap(),
+    mut_long_swap(C, Pos).
+
+mut_long_swap(C, {Pos1, Pos2} = _Pos) ->
+    NewC = swap(C, {Pos1, Pos2}),
+    ?D_F("mut_long_swap/2 pos= ~p~n~n", [_Pos]),
+    ?D_MUTATE(C, NewC),
+    NewC.
+
+swap(C, {Pos1, Pos2}) ->
     Tuple = list_to_tuple(C),
     E1 = element(Pos1, Tuple),
     E2 = element(Pos2, Tuple),
 
     Tmp1 = setelement(Pos1, Tuple, E2),
     Tmp2 = setelement(Pos2, Tmp1, E1),
-
-    %% ?D_F("mut_short_swap/2 pos= ~p~n~n", [Pos1]),
-
     tuple_to_list(Tmp2).
 
-%%
-%% Swap two distant genes in a chromosome
-%%
-mut_long_swap(C) ->
-    C.
 
+%%
+%% Randomize a chromosome
+%%
 mut_randomize(C) ->
     utils:shuffle(C).
 
@@ -265,16 +289,6 @@ mut_randomize(C) ->
 c() ->
     lists:seq($a, $j).
 
-%% Capitalize a string (or not)
--ifdef(DEBUG).
-cap(List) ->
-    [C+($A-$a) || C <- List].
--else.
-cap(List) ->
-    List.
--endif.
-
-
 
 -ifdef(DEBUG).
 test_mut_reverse_full() ->
@@ -285,9 +299,12 @@ test_mut_reverse_partial() ->
     C = c(),
     mut_reverse(C).
 
-%% TODO needs pretty-printing
 test_mut_short_swap() ->
     C = c(),
     mut_short_swap(C).
+
+test_mut_long_swap() ->
+    C = c(),
+    mut_long_swap(C).
 
 -endif.

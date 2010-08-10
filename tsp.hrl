@@ -4,13 +4,13 @@
 %% GA mutations
 -define(NB_MUTATIONS, 10).
 
--define(DEBUG, true).
+%% -define(DEBUG, true).
 
 %% XXX hardocoded for efficiency reasons
 
 %% Number of Real Cities
 -ifdef(DEBUG).
--define(NRC, 10).
+-define(NRC, 11).
 -else.
 -define(NRC, 250).
 -endif.
