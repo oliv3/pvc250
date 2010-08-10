@@ -11,11 +11,11 @@
 %% d= 11.8093
 
 %% GA parameters
--define(POP_SIZE, 10000). %% 50000).
+-define(POP_SIZE, 20000). %% 50000).
 
 %% Cross-over et mutations
 -define(P_XOVER,    80). %% 80%
--define(P_MUTATION, 3).  %% une chance sur 3
+-define(P_MUTATION, 5).  %% une chance sur 5
 
 %% CPU cooling pauses
 -define(TOS, 5). %% seconds
