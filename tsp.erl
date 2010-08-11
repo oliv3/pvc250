@@ -13,7 +13,8 @@
 %% d= 11.8093
 
 %% GA parameters
--define(POP_SIZE, 40000).
+%% 40000 seems to be an upper limit for now, setting to 35K to be safe --oliv3
+-define(POP_SIZE, 35000).
 
 %% Cross-over et mutations
 -define(P_XOVER,    85). %% 85%
