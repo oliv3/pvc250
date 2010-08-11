@@ -18,13 +18,13 @@
 
 new(Parent) when is_pid(Parent) ->
     {Path, Length} = ?MODULE:get(Parent),
-    spawn(?MODULE, loop, [Path, Length]);
+    spawn(fun () -> (?MODULE):loop(Path, Length) end);
 new(Path) when is_list(Path) ->
     L = ?MODULE:length(Path),
-    spawn(?MODULE, loop, [Path, L]);
+    spawn(fun () -> (?MODULE):loop(Path, L) end);
 new(Max) ->
     %% io:format("init: ~p~n", [Max]),
-    spawn(?MODULE, init, [Max]).
+    spawn(fun () -> (?MODULE):init(Max) end).
 
 init(Max) ->
     Path = utils:shuffle(lists:seq(2, Max)),
@@ -259,8 +259,8 @@ mut_long_swap(C) ->
     Pos = random2gap(),
     mut_long_swap(C, Pos).
 
-mut_long_swap(C, {Pos1, Pos2} = _Pos) ->
-    NewC = swap(C, {Pos1, Pos2}),
+mut_long_swap(C, _Pos) ->
+    NewC = swap(C, _Pos),
     ?D_F("mut_long_swap/2 pos= ~p~n~n", [_Pos]),
     ?D_MUTATE(C, NewC),
     NewC.
