@@ -28,8 +28,8 @@ new(Max) ->
 
 init(Max) ->
     Path = utils:shuffle(lists:seq(2, Max)),
-    L = ?MODULE:length(Path),
-    loop(Path, L).
+    Length = ?MODULE:length(Path),
+    loop(Path, Length).
 
 
 delete(Pid) ->
