@@ -7,15 +7,17 @@
 
 -export([start/0, start/1]).
 
+%% TODO: profiling (fprof/eprof)
+
 %% Best solution so far:
 %% d= 11.8093
 
 %% GA parameters
--define(POP_SIZE, 20000). %% 50000).
+-define(POP_SIZE, 40000).
 
 %% Cross-over et mutations
--define(P_XOVER,    80). %% 80%
--define(P_MUTATION, 5).  %% une chance sur 5
+-define(P_XOVER,    85). %% 85%
+-define(P_MUTATION, 3).  %% une chance sur 3
 
 %% CPU cooling pauses
 -define(TOS, 5). %% seconds
@@ -24,7 +26,7 @@
 -define(TOP, 10).
 -define(H_POP_SIZE, (?POP_SIZE bsr 1)).
 
--record(state, {n, pids}).
+-record(state, {n, pids, gen=1}).
 
 -ifdef(DEBUG).
 start() ->
@@ -55,16 +57,31 @@ receive_eval(Ref) ->
     end.
 
 
-loop(#state{n=N, pids=Pids} = State) ->
+max(List) ->
+    max(List, -1).
+max([], Max) ->
+    Max;
+max([H|Tail], Max) ->
+    NewMax = erlang:max(H, Max),
+    max(Tail, NewMax).
+
+
+loop(#state{n=N, pids=Pids, gen=Gen} = State) ->
     %% io:format("[d] Pids:~n~p~n", [Pids]),
 
     Evals1 = [{Pid, path:get_length(Pid)} || Pid <- Pids],
     %% io:format("[d] Evals1:~n~p~n", [Evals1]),
     
-    TotalScore = lists:sum([Score || {_Path, Score} <- Evals1]),
-    io:format("[d] Total score: ~p~n", [TotalScore]),
+    %% TotalScore = lists:sum([Score || {_Path, Score} <- Evals1]),
+    %% io:format("[d] Total score: ~p~n", [TotalScore]),
 
-    Evals2 = [{Path, TotalScore-Score} || {Path, Score} <- Evals1],
+    %% we "+ 1" here to avoid null scores that would break the roulette
+    MaxLength = max([Score || {_Path, Score} <- Evals1]) + 1,
+    %% and substract here to show the real maximum
+    io:format("[d] Max length: ~p~n", [MaxLength - 1]),
+
+    %% Evals2 = [{Path, TotalScore-Score} || {Path, Score} <- Evals1],
+    Evals2 = [{Path, MaxLength-Length} || {Path, Length} <- Evals1],
     %% io:format("[d] Evals2:~n~p~n", [Evals2]),
 
     Evals3 = lists:reverse(lists:keysort(2, Evals2)),
@@ -76,7 +93,7 @@ loop(#state{n=N, pids=Pids} = State) ->
 
     %% Display Top N
     Top = top(Evals3),
-    %% io:format("~n[*] Generation: ~p, ~p individuals evaluated~n", [Gen, Gen*?POP_SIZE]),
+    io:format("~n[*] Generation: ~p, ~p individuals evaluated~n", [Gen, Gen*?POP_SIZE]),
     %% io:format("[i] ~p processes~n~n", [length(processes())]),
     io:format("[*] Top ~p:~n", [?TOP]),
     %% io:format("[*] Top ~p: ~p~n", [?TOP, Top]),
@@ -96,7 +113,7 @@ loop(#state{n=N, pids=Pids} = State) ->
     timer:sleep(1000),
 
     %% Next generation
-    ?MODULE:loop(State#state{pids=NewPids}).
+    ?MODULE:loop(State#state{pids=NewPids, gen=Gen+1}).
     
 
 top(List) ->
