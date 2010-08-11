@@ -19,11 +19,12 @@ start(File) ->
     L0 = binary_to_list(Bin),
     [N0|Cities] = string:tokens(L0, [10]),
     N1 = list_to_integer(N0),
-    io:format("[+] Loading ~p cities~n", [N1]),
+    io:format("[+] Loading ~p cities... ", [N1]),
     SPid = spawn(?MODULE, init, [self(), N1, Cities]),
     register(?SERVER, SPid),
     receive
 	started ->
+	    io:format("done.~n", []),
 	    N1
     end.
 
