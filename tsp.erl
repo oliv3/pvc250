@@ -76,10 +76,8 @@ loop(#state{n=N, pids=Pids, gen=Gen} = State) ->
     %% TotalScore = lists:sum([Score || {_Path, Score} <- Evals1]),
     %% io:format("[d] Total score: ~p~n", [TotalScore]),
 
-    %% we "+ 1" here to avoid null scores that would break the roulette
-    MaxLength = max([Score || {_Path, Score} <- Evals1]) + 1,
-    %% and substract here to show the real maximum
-    io:format("[d] Max length: ~p~n", [MaxLength - 1]),
+    MaxLength = max([Score || {_Path, Score} <- Evals1]),
+    io:format("[d] Max length: ~p~n", [MaxLength]),
 
     %% Evals2 = [{Path, TotalScore-Score} || {Path, Score} <- Evals1],
     Evals2 = [{Path, MaxLength-Length} || {Path, Length} <- Evals1],

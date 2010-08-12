@@ -1,4 +1,4 @@
-#OPTIMS=+hipe
+OPTIMS=+hipe
 
 all: utils.beam cities.beam path.beam tsp.beam
 
