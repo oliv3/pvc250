@@ -14,11 +14,12 @@
 
 %% GA parameters
 %% 40000 seems to be an upper limit for now, setting to 35K to be safe --oliv3
--define(POP_SIZE, 35000).
+%% -define(POP_SIZE, 35000).
+-define(POP_SIZE, 100). %% testing
 
 %% Cross-over et mutations
--define(P_XOVER,    85). %% 85%
--define(P_MUTATION, 3).  %% une chance sur 3
+-define(P_XOVER,    65). %% 65%
+-define(P_MUTATION, 10). %% une chance sur 10
 
 %% CPU cooling pauses
 -define(TOS, 5). %% seconds
@@ -66,6 +67,9 @@ max([H|Tail], Max) ->
     NewMax = erlang:max(H, Max),
     max(Tail, NewMax).
 
+hr() ->
+    io:format("~s~n", [lists:duplicate(79, $=)]).
+
 
 loop(#state{n=N, pids=Pids, gen=Gen} = State) ->
     %% io:format("[d] Pids:~n~p~n", [Pids]),
@@ -77,7 +81,7 @@ loop(#state{n=N, pids=Pids, gen=Gen} = State) ->
     %% io:format("[d] Total score: ~p~n", [TotalScore]),
 
     MaxLength = max([Score || {_Path, Score} <- Evals1]),
-    io:format("[d] Max length: ~p~n", [MaxLength]),
+    hr(),
 
     %% Evals2 = [{Path, TotalScore-Score} || {Path, Score} <- Evals1],
     Evals2 = [{Path, MaxLength-Length} || {Path, Length} <- Evals1],
@@ -92,15 +96,18 @@ loop(#state{n=N, pids=Pids, gen=Gen} = State) ->
 
     %% Display Top N
     Top = top(Evals3),
-    io:format("~n[*] Generation: ~p, ~p individuals evaluated~n", [Gen, Gen*?POP_SIZE]),
-    %% io:format("[i] ~p processes~n~n", [length(processes())]),
+    io:format("[*] Generation: ~p, ~p individuals evaluated~n", [Gen, Gen*?POP_SIZE]),
+    io:format("[d] Max length: ~p~n", [MaxLength]),
+    %% io:format("[i] ~p processes~n", [length(processes())]),
+    hr(),
     io:format("[*] Top ~p:~n", [?TOP]),
     %% io:format("[*] Top ~p: ~p~n", [?TOP, Top]),
     [path:display(Pid) || {Pid, _Score} <- Top],
+    hr(),
     io:format("~n", []),
 
     %% Create new population
-    Refs = new_population(N, ?H_POP_SIZE, Evals3, TotalScore2),
+    Refs = new_population(N, ?POP_SIZE, Evals3, TotalScore2),
     ChildrenPids = receive_refs(Refs),
     %% io:format("[d] ChildrenPids: ~p~n", [ChildrenPids]),
     NewPids = lists:flatten(ChildrenPids),
@@ -147,11 +154,11 @@ mate(Pid, Ref, Pid1, Pid2) ->
 	    %% io:format("MATE: new/1 ~p~n", [Parent1]),
 	    Child1 = path:new(Pid1),
 	    %% io:format("MATE: new/2 ~p~n", [Parent2]),
-	    Child2 = path:new(Pid2),
+	    %% Child2 = path:new(Pid2),
 	    maybe_mutate(Child1),
-	    maybe_mutate(Child2),
+	    %% maybe_mutate(Child2),
 	    %% io:format("RESULT 1: ~p ~p~n", [Child1, Child2]),
-	    Pid ! {Ref, [Child1, Child2]}
+	    Pid ! {Ref, Child1}
     end.
 
     
@@ -216,45 +223,43 @@ xover(Pid, Ref, Parent1, Parent2) ->
     %% Cut = crypto:rand_uniform(1, NCities),
     %% {Child1, Child2} = xover1(Cut, Parents),
 
-    {Child1, Child2} = case MS rem 2 of
-			   0 ->
-			       %% io:format("1"),
-			       xover1(Parents);
-			   1 ->
-			       %% io:format("2"),
-			       xover2(Parents)
-		       end,
+    Child = case MS rem 2 of
+		%% _ -> %% 0 ->
+		0 ->
+		    %% io:format("1"),
+		    xover1(Parents);
+		1 ->
+		    %% io:format("2"),
+		    xover2(Parents)
+	    end,
 
-    Pid1 = path:new(Child1),
-    Pid2 = path:new(Child2),
-    maybe_mutate(Pid1),
-    maybe_mutate(Pid2),
-    %%io:format("RESULT X: ~p ~p~n", [Pid1, Pid2]),
-    Pid ! {Ref, [Pid1, Pid2]}.
+    ChildPid = path:new(Child),
+    maybe_mutate(ChildPid),
+    Pid ! {Ref, ChildPid}.
 
 
 xover1(Parents) ->
     Cut = path:rnd_pos(),
     xover1(Cut, Parents).
 xover1(Cut, {Path1, Path2}) ->
-    {L1, R1} = lists:split(Cut, Path1),
+    {L1, _R1} = lists:split(Cut, Path1),
     {L2, R2} = lists:split(Cut, Path2),
     
     NR1 = [[L2--L1]|[R2--L1]],
-    NR2 = [[L1--L2]|[R1--L2]],
+    %% NR2 = [[L1--L2]|[R1--L2]],
 
     C1 = [L1|NR1],
-    C2 = [L2|NR2],
+    %% C2 = [L2|NR2],
 
-    {lists:flatten(C1), lists:flatten(C2)}.
+    lists:flatten(C1).
 
 
 xover2(Parents) ->
     Pos = path:random2(),
     xover2(Pos, Parents).
-xover2({Cut1, Cut2}, Parents) ->
-    Children1 = xover1(Cut1, Parents),
-    xover1(Cut2, Children1).
+xover2({Cut1, Cut2}, {Path1, _Path2} = Parents) ->
+    Child = xover1(Cut1, Parents),
+    xover1(Cut2, {Child, Path1}).
 
 
 test_parents() ->
