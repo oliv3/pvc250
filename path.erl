@@ -42,41 +42,27 @@ path(Path0) ->
 length(Path0) ->
     Path = path(Path0),
     %% io:format("path(~p)~n", [Path]),
-    sum(Path, 0, fun dist/2).
-clength(Path0) ->
-    Path = path(Path0),
-    sum(Path, 0, fun cdist/2).
+    sum(Path, 0).
 
 
-sum([_Last], Acc, _F) ->
+sum([_Last], Acc) ->
     Acc;
-sum([C1, C2 | Tail], Acc, F) ->
+sum([C1, C2 | Tail], Acc) ->
     D = if
 	    C1 < C2 ->
-		F(C1, C2);
+		dist(C1, C2);
 	    true ->
-		F(C2, C1)
+		dist(C2, C1)
 	end,
     %% io:format("D= ~p Acc= ~p~n", [D, Acc]),
     %% io:format("List: ~p Acc: ~p, F: ~p~n", [[C2 | Tail], Acc + D, F]),
-    sum([C2 | Tail], Acc + D, F).
+    sum([C2 | Tail], Acc + D).
 
 
 dist(C1, C2) ->
     %% io:format("dist ~p ~p~n", [C1, C2]),
-    [{_Couple, RD, _CD}] = ets:lookup(?DIST, {C1, C2}),
+    [{_Couple, RD}] = ets:lookup(?DIST, {C1, C2}),
     RD.
-    %% case ets:lookup(?DIST, {C1, C2}) of
-    %% 	[{_Couple, RD, _CD}] ->
-    %% 	    RD;
-	
-    %% 	[] ->
-    %% 	    io:format("oups no match for dist ~p ~p~n", [C1, C2]),
-    %% 	    0
-    %% end.
-cdist(C1, C2) ->
-    [{_Couple, _RD, CD}] = ets:lookup(?DIST, {C1, C2}),
-    CD.
 
 
 get(Pid) ->

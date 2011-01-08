@@ -65,8 +65,7 @@ insert_dist({C1, C2} = Key, Tid) when C1 < C2 ->
     [P1] = ets:lookup(Tid, C1),
     [P2] = ets:lookup(Tid, C2),
     Dist = dist(P1, P2),
-    CDist = cdist(P1, P2),
-    ets:insert(?DIST, {Key, Dist, CDist});
+    ets:insert(?DIST, {Key, Dist});
 insert_dist(_Couple, _Tid) ->
     ok.
 
@@ -75,16 +74,6 @@ dist({_N1, {X1, Y1}, _C1}, {_N2, {X2, Y2}, _C2}) ->
     DY = Y1 - Y2,
     DX2 = DX * DX,
     DY2 = DY * DY,
-    math:sqrt(DX2 + DY2).
-cdist({_N1, _R1, {X1, Y1, _Z1}}, {_N2, _R2, {X2, Y2, _Z2}}) ->
-    DX = X1 - X2,
-    DY = Y1 - Y2,
-    %% DZ = Z1 - Z2,
-    DX2 = DX * DX,
-    DY2 = DY * DY,
-    %% DZ2 = DZ * DZ,
-    %% when ready for 3D
-    %% math:sqrt(DX2 + DY2 + DZ2).
     math:sqrt(DX2 + DY2).
 
 
