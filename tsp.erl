@@ -60,12 +60,12 @@ receive_eval(Ref) ->
 
 
 max(List) ->
-    max(List, -1).
+    ?MODULE:max(List, -1).
 max([], Max) ->
     Max;
 max([H|Tail], Max) ->
     NewMax = erlang:max(H, Max),
-    max(Tail, NewMax).
+    ?MODULE:max(Tail, NewMax).
 
 hr() ->
     io:format("~s~n", [lists:duplicate(79, $=)]).
