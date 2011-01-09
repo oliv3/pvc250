@@ -1,7 +1,7 @@
 -module(utils).
 -author('olivier@biniou.info').
 
--export([shuffle/1]).
+-export([shuffle/1, uniform/0]).
 
 %% -- shuffle/1
 %%

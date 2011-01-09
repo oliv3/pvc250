@@ -14,7 +14,8 @@
 
 %% GA parameters
 %% 40000 seems to be an upper limit for now, setting to 35K to be safe --oliv3
--define(POP_SIZE, 35000).
+%% -define(POP_SIZE, 35000).
+-define(POP_SIZE, 10000).
 %% -define(POP_SIZE, 100). %% testing
 
 %% Cross-over et mutations
@@ -163,8 +164,7 @@ mate(Pid, Ref, Pid1, Pid2) ->
 
     
 roulette(Population, MaxScore, NotThisPid) ->
-    <<B>> = crypto:rand_bytes(1),
-    FB = B / 255,
+    FB = utils:uniform(),
     %% Score = crypto:rand_uniform(0, MaxScore),
     Score = FB * MaxScore,
     Pid = extract(Population, Score),
